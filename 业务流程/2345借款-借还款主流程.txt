@@ -1,0 +1,192 @@
+*** Settings ***
+Resource          ../公共方法/接口方法.txt
+Resource          ../公共方法/验证方法.txt
+
+*** Variables ***
+
+*** Test Cases ***
+初始化数据
+    ${account_info}    Create Account Info    中国工商银行
+    Set Suite Variable    ${idcard}    ${account_info['ssn']}
+    Set Suite Variable    ${phone}    ${account_info['phone']}
+    Set Suite Variable    ${name}    ${account_info['name']}
+    Set Suite Variable    ${bankcard}    ${account_info['bankcard']}
+    Set Suite Variable    ${bankcardNo}    ${account_info['bankcardNo']}
+    Set Suite Variable    ${bankcard_credit}    ${account_info['bankcard_credit']}
+    Set Suite Variable    ${bankcode}    ${account_info['bankcode']}
+    Set Suite Variable    ${bankname}    ${account_info['bankname']}
+    Set Suite Variable    ${reqUuid}    ${account_info['reqUuid']}
+    ${merchantUserId}=    get time    epoch
+    Set Suite Variable    ${merchantUserId}    ${merchantUserId}
+
+判断新老用户
+    账号是否已注册-checkMobileExist
+    账号是否已注册-checkMobileExist-check-response
+
+获取短信验证码
+    获取短信验证码-registerOrModifyLoginCode
+    获取短信验证码-registerOrModifyLoginCode-check-response
+
+短信验证码登录
+    短信验证码登陆-loginByCode
+    短信验证码登陆-loginByCode-check-response
+
+获取OCR供应商类型(FACE)
+    获取OCR供应商类型-getProviderType
+    获取OCR供应商类型-getProviderType-check-response
+
+上传活体识别结果码
+    Run Keyword If    "${provider}" == "FACE_ID"    上传活体识别结果码(FACE++)-saveVerifyFailureResult
+    ...    ELSE    上传活体识别结果码(WZ)-saveVerifyFailureResult
+    上传活体识别结果码-saveVerifyFailureResult-check-response
+
+上传人脸识别结果
+    Run Keyword If    "${provider}" == "FACE_ID"    上传人脸识别结果（FACE++）-uploadFaceVerifyResult
+    ...    ELSE    上传人脸识别结果（WZ）-uploadFaceVerifyResult
+    上传人脸识别结果-uploadFaceVerifyResult-check-response
+
+获取OCR供应商类型(OCR正面)
+    sleep    3
+    获取OCR供应商类型(OCR)-getProviderType
+    获取OCR供应商类型-getProviderType-check-response
+
+上传身份证正面识别结果码
+    Run Keyword If    "${provider}" == "FACE_ID"    上传身份证正面识别结果码(FACE++)-saveVerifyFailureResult
+    ...    ELSE    上传身份证正面识别结果码(WZ)-saveVerifyFailureResult
+    上传活体识别结果码-saveVerifyFailureResult-check-response
+
+获取OCR供应商类型(OCR反面)
+    sleep    3
+    获取OCR供应商类型(OCR)-getProviderType
+    获取OCR供应商类型-getProviderType-check-response
+
+上传身份证反面识别结果码
+    Run Keyword If    "${provider}" == "FACE_ID"    上传身份证反面识别结果码(FACE++)-saveVerifyFailureResult
+    ...    ELSE    上传身份证反面识别结果码(WZ)-saveVerifyFailureResult
+    上传活体识别结果码-saveVerifyFailureResult-check-response
+
+身份证信息校验
+    身份证信息校验-checkMatchForMobileAndIdCard
+    身份证信息校验-checkMatchForMobileAndIdCard-check-response
+
+上传OCR识别结果
+    Run Keyword If    "${provider}" == "FACE_ID"    上传OCR识别结果(FACE++)-uploadOcrVerifyResult
+    ...    ELSE    上传OCR识别结果(WZ)-uploadOcrVerifyResult
+    上传OCR识别结果-uploadOcrVerifyResult-check-response
+
+上传基本信息
+    上传基本信息-userInfo
+    上传基本信息-userInfo-check-response
+
+绑定信用卡-获取验证码
+    获取信用卡验证码-addbankcard
+    获取信用卡验证码-checkaddbankcard
+
+绑定银行信用卡
+    绑定银行信用卡-bankcard
+    绑定银行信用卡-checkbankcard
+
+通知运营商已认证
+    通知运营商已认证-updateDataCertification
+    通知运营商已认证-updateDataCertification-check-response
+
+申请开户
+    申请开户-authAccount
+    申请开户-authAccount-check-response
+
+等待开户成功
+    Wait Until Keyword Succeeds    10 min    7 sec    开户状态-userStatus
+    开户状态-userStatus-check-response
+
+获取储蓄卡验证码
+    获取储蓄卡验证码-smsValidationController
+    获取储蓄卡验证码-smsValidationController-check-response
+
+绑定储蓄卡
+    绑定储蓄卡-bankcard
+    绑定储蓄卡-bankcard-check-response
+
+发起预借款
+    发起预借款-prepare2Borrow
+    发起预借款-prepare2Borrow-check-response
+
+预借款-去查
+    Wait Until Keyword Succeeds    2 min    7 sec    预借款-去查-getLoanStatus
+    #获取vip状态-getLoanStatus-check-response
+
+获取借款验证码
+    获取借款验证码-gainDynamicValidateCode
+    获取借款验证码-gainDynamicValidateCode-check-response
+
+确认借款
+    确认借款-borrow4Vip
+    确认借款-borrow4Vip-check-response
+
+获取借还款列表接口
+    获取借还款列表接口-getLoanOrderInfo
+    获取借还款列表接口-getLoanOrderInfo-check-response
+
+获取借款信息
+    获取借款信息-borrowInfoQuery
+    获取借款信息-borrowInfoQuery-check-response
+
+借款状态查询
+    Wait Until Keyword Succeeds    10 min    7 sec    借款状态查询-borrowStatusQuery
+    借款状态查询-borrowStatusQuery-check-response
+
+获取可用银行卡
+    获取可用银行卡-getAllBankcard
+    获取可用银行卡-getAllBankcard-check-response
+
+查询银行卡是否可修改
+    查询银行卡是否可修改-getBankcardLockStatus
+    查询银行卡是否可修改-getBankcardLockStatus-check-response
+
+获取身份证信息
+    获取身份证信息-getIdentity
+    获取身份证信息-getIdentity-check-response
+
+验证银行卡
+    验证银行卡-bankVerifyByBankcardNo
+    验证银行卡-bankVerifyByBankcardNo-check-response
+
+换绑卡申请鉴权A-B
+    换绑卡申请鉴权-addBankcard
+    换绑卡申请鉴权-addBankcard-check-response
+
+换绑卡鉴权确认A-B
+    换绑卡鉴权确认-bankCard
+    换绑卡鉴权确认-bankCard-check-response
+
+获取银行卡信息
+    获取银行卡信息-getAllBankcard
+
+换绑卡B-A
+    换绑卡申请鉴权(B-A)-addBankcard
+    换绑卡申请鉴权（B-A）-addBankcard-check-response
+
+获取首页状态
+    获取首页状态-getUserLoanRepayStatus
+    获取首页状态-getUserLoanRepayStatus-check-response
+
+获取还款信息
+    获取还款信息-arrearQuery
+
+再次获取银行卡信息
+    获取银行卡信息-getAllBankcard
+
+确认还款
+    确认还款-repayment
+    确认还款-repayment-check-response
+
+还款状态查询
+    Wait Until Keyword Succeeds    10 min    7 sec    还款状态查询-repayStatusQuery
+    还款状态查询-repayStatusQuery-check-response
+
+历史账单
+    历史账单-listBills
+    历史账单-listBills-check-response
+
+还款记录
+    还款记录-getOrderDetails
+    还款记录-getOrderDetails-check-response

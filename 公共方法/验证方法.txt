@@ -1,0 +1,378 @@
+*** Settings ***
+Resource          基础方法.txt
+
+*** Keywords ***
+账号是否已注册-checkMobileExist-check-response
+    #验证接口响应参数正确性
+    Should Be Equal    ${json['code']}    success
+    #Should Not Be Empty    ${json['result']['exist']}
+    #Should Not Be Empty    ${json['result']['pwdHasSet']}
+    #Should Not Be Empty    ${json['result']['dealPwdHasSet']}
+
+获取短信验证码-registerOrModifyLoginCode-check-response
+    #验证接口响应参数正确性
+    Should Be Equal    ${json['code']}    success
+    Should Be Equal    ${json['result']['deleteFlag']}    ${0}
+    Should Be Equal    ${json['result']['status']}    ${1}
+    #验证注册短信验证码获取入库
+    ${m}    取模分表    ${phone}    ${20}    #手机号取模
+    Check If Exists In Database    SELECT * from message_center.s_user_dynamic_code_${m} \ where sms_type = 1 AND mobile_phone = ${phone}
+
+短信验证码登陆-loginByCode-check-response
+    #验证接口响应参数正确性
+    Should Be Equal    ${json['code']}    success
+    ${customerId}    MYSQL查询    SELECT \ custId_behalf,id,uuid \ FROM customer_center.`user` WHERE mobilephone_md5 = MD5(${phone})
+    Set Suite Variable    ${customerId[0][0]}    #立即贷的customer_id
+    Set Suite Variable    ${customerId[0][1]}    #user_id
+    Should Be Equal    ${json['result']['userId']}    ${customerId[0][1]}
+    Should Be Equal    ${json['result']['uuId']}    ${customerId[0][2]}${pid}
+    Should Be Equal    ${json['result']['mobilephone']}    ${phone}
+    ${register_date}    MYSQL查询    SELECT register_date FROM customer_center.`customer` WHERE \ \ prod_id = ${pid} AND user_id = '${customerId[0][1]}'
+    ${cid}    MYSQL查询    SELECT id \ FROM customer_center.`customer` WHERE \ \ prod_id = ${pid} AND user_id = '${customerId[0][1]}'    #畅借款的customer_id
+    Set Suite Variable    ${cid[0][0]}    #畅借款的customer_id
+    ${date}    convert date    ${register_date[0][0]}    epoch
+    ${date1}    Evaluate    int(${date}*1000)
+    #Should Be Equal    ${json['result']['registerDate']}    ${date1}
+    Should Be Equal    ${json['result']['customerId']}    ${cid[0][0]}
+    ${token}    MYSQL查询    SELECT token FROM customer_center.`user_login_token` WHERE device_type = 0 AND user_id = '${customerId[0][1]}' and app_id = ${pid}
+    log    ${token[0][0]}
+    Should Be Equal    ${json['result']['token']}    ${token[0][0]}
+    #验证短信验证码登陆成功入库
+    ${uidnum}    取模分表    ${customerId[0][1]}    ${20}    #user_id取模
+    ${cidnum1}    取模分表    ${customerId[0][0]}    ${20}    #立即贷的customer_id取模
+    ${cidnum2}    取模分表    ${cid[0][0]}    ${20}    #畅借款的customer_id取模
+    Set Suite Variable    ${uidnum}
+    Set Suite Variable    ${cidnum1}
+    Set Suite Variable    ${cidnum2}
+    #Row Count Is Equal To X    SELECT * FROM customer_center.user_login_history_${uidnum} \ where user_id = '${customerId[0][1]}'    1    #用户登陆历史表
+    Check If Exists In Database    SELECT *FROM customer_center.`user_md5_info` WHERE user_id =${customerId[0][1]}    #md5信息表
+
+获取资料列表信息-authInfo-check-response
+    #验证接口响应参数正确性
+    log    ${json['result']['order']}
+    ${listA}    create list    identity    contacts    baseinfo    operator
+    ${listB}    create list    identity    baseinfo    contacts    operator
+    ${listC}    create list    identity    contacts    baseinfo
+    ${listD}    create list    identity    baseinfo    contacts
+    ${exceptlist}    create list    ${listA}    ${listB}    ${listC}    ${listD}
+    Set Suite Variable    ${listA}
+    Set Suite Variable    ${listB}
+    log    ${exceptlist}
+    List Should Contain Value    ${exceptlist}    ${json['result']['order']}
+    Run Keyword If    "${pid}" == "109"    Should Be Equal    ${json['result']['protocolUrl']}    ${E-HOST-CONTRACT}/getOpenProtocolInfo?protocolId=11
+    ...    ELSE IF    "${pid}" == "110"    Should Be Equal    ${json['result']['protocolUrl']}    ${E-HOST-CONTRACT}/getOpenProtocolInfo?protocolId=8
+    ...    ELSE    log    1
+    #Should Be Equal    ${json['result']['protocolUrl']}    ${E-HOST-CONTRACT}/getOpenProtocolInfo?protocolId=11    #校验开户合同模板正确性
+    #校验用户资料分流，顺序标志
+    ${status}    MYSQL查询    SELECT `status` from bpa_${pid}_center.account_diff_record_${cidnum2} \ \ WHERE customer_id = ${cid[0][0]} ;    #运营商标志
+    ${tag}    MYSQL查询    SELECT tag from bpa_${pid}_center.user_tag_info_${uidnum} \ WHERE user_id = ${customerId[0][1]} ;    #资料顺序
+    ${a}    Set Variable    ${status[0][0]}
+    ${b}    Set Variable    ${tag[0][0]}
+    ${excepresult}    Create List    ${a}    ${b}
+    log    ${excepresult}
+    ${list1}    create list    ${0}    ORDER_B
+    ${list2}    create list    ${0}    ORDER_A
+    ${list3}    create list    ${1}    ORDER_B
+    ${list4}    create list    ${1}    ORDER_A
+    Run Keyword If    ${json['result']['order']} == ${listA}    Should Be Equal    ${excepresult}    ${list1}
+    ...    ELSE IF    ${json['result']['order']} == ${listB}    Should Be Equal    ${excepresult}    ${list2}
+    ...    ELSE IF    ${json['result']['order']} == ${listC}    Should Be Equal    ${excepresult}    ${list3}
+    ...    ELSE    Should Be Equal    ${excepresult}    ${list4}
+
+获取OCR供应商类型-getProviderType-check-response
+    #验证接口响应参数正确性
+    Should Be Equal    ${json['code']}    success
+    Should Not Be Empty    ${json['result']}
+    #校验用户数据库供应商状态标志
+    Row Count Is Equal To X    SELECT * from customer_center.customer_ocr_provider_${cidnum1} \ where provider = "${provider}" \ \ \ and customer_id=${customerId[0][0]}    2
+
+上传活体识别结果码-saveVerifyFailureResult-check-response
+    #验证接口响应参数正确性
+    Should Be Equal    ${json['code']}    success
+
+上传人脸识别结果-uploadFaceVerifyResult-check-response
+    #验证接口参数返回数据正确性
+    Should Be Equal    ${json['code']}    success
+    log    ${json['result']}
+    Should Be Equal    ${json['result']}    ${True}
+    #校验数据库用户刷脸日志表
+    Row Count Is Equal To X    SELECT *FROM customer_center.`wz_face_log_${cidnum1}` WHERE provider_type = "${provider}" AND customer_id = '${customerId[0][0]}';    2
+
+身份证信息校验-checkMatchForMobileAndIdCard-check-response
+    #验证接口参数返回数据正确性
+    Should Be Equal    ${json['code']}    success
+
+上传OCR识别结果-uploadOcrVerifyResult-check-response
+    #验证接口参数返回数据正确性
+    Should Be Equal    ${json['code']}    success
+    Should Be Equal    ${json['result']['registerOther']}    ${False}
+    #Should Be Equal    ${json['result']['registerOtherMessage']}    已通过大数据为您匹配相关申请资料
+    Should Be Equal As Integers    ${json['result']['result']}    1
+    #校验上传OCR数据入库
+    Check If Exists In Database    SELECT *FROM customer_center.wz_face_auth_${cidnum1} WHERE file_status = 1 and customer_id = '${customerId[0][0]}';
+    ${count}    Row Count    SELECT *FROM customer_center.image_info_${cidnum1} \ WHERE customer_id = '${customerId[0][0]}'    #验证图片资源数量
+    Run Keyword If    "${provider}" == "FACE_ID"    Should Be Equal As Integers    ${count}    5
+    ...    ELSE    Should Be Equal As Integers    ${count}    4
+    Row Count Is Equal To X    SELECT *FROM customer_center.ocr_log_${cidnum1} \ WHERE provider_type = "${provider}" AND operate_type IN (3,4,5) and customer_id = '${customerId[0][0]}';    3    #验证身份证扫描提交成功log记录
+    Check If Exists In Database    SELECT *FROM customer_center.ocr_log_${cidnum1} \ WHERE ocr_idcard IS NOT NULL AND ocr_name IS NOT NULL AND ocr_address IS NOT NULL AND ocr_authority IS NOT NULL AND ocr_birth IS NOT NULL AND ocr_nation IS NOT NULL AND ocr_Id IS NOT NULL AND ocr_sex IS NOT NULL AND ocr_validDate IS NOT NULL \ AND operate_type = 5 \ and customer_id = '${customerId[0][0]}';
+    Row Count Is Equal To X    SELECT * FROM customer_center.user_ocr_live_face_match_result \ WHERE ocr_result = 1 and live_body_result = 1 and face_match_result = 1 and identity_match_result = 1 and app_id ='${pid}' and \ user_id = '${customerId[0][1]}'    1    #验证人脸对比结果记录表
+    ${namestr}    Evaluate    str("${name}")
+    ${idcardstr}    Evaluate    str("${idcard}")
+    ${nameEncrypt}    Three Des Encrypt    ${namestr}    #验证客户身份信息表
+    ${idcardEncrypt}    Three Des Encrypt    ${idcardstr}
+    Row Count Is Equal To X    SELECT * FROM customer_center.customer_identiy_${cidnum1} WHERE customer_id = "${customerId[0][0]}" AND identity_name = "${nameEncrypt}" and identity_card = "${idcardEncrypt}";    1
+
+上传紧急联系人-basicContacts-check-response
+    #验证接口参数返回数据正确性
+    Should Be Equal    ${json['code']}    success
+    Should Be Equal    ${json['result']}    ${True}
+    #校验联系人数据入库
+    Row Count Is Equal To X    SELECT * FROM customer_center.`customer_contacts_${cidnum1}` WHERE customer_id = "${customerId[0][0]}";    2
+
+获取紧急联系人-getBasicContacts-check-response
+    #验证接口参数返回数据正确性
+    Should Be Equal    ${json['code']}    success
+    Should Be Equal    ${json['result']['friendName']}    亮亮
+    Should Be Equal    ${json['result']['friendPhone']}    13556598412
+    Should Be Equal    ${json['result']['relativeName']}    可可
+    Should Be Equal    ${json['result']['relativePhone']}    15069545666
+
+上传基本信息-userInfo-check-response
+    #验证接口参数返回数据正确性
+    Should Be Equal    ${json['code']}    success
+    #校验基本信息数据入库
+    Row Count Is Equal To X    SELECT * FROM customer_center.`home_info_${cidnum1}` WHERE customer_id = "${customerId[0][0]}";    1
+    Row Count Is Equal To X    SELECT *FROM customer_center.`work_info_${cidnum1}` WHERE customer_id = "${customerId[0][0]}";    1
+
+获取信用卡验证码-checkaddbankcard
+    Should Be Equal    ${json['code']}    success
+
+绑定银行信用卡-checkbankcard
+    Should Be Equal    ${json['code']}    success
+
+获取基本信息-getBasicInfo-check-response
+    #验证接口参数返回数据正确性
+    Should Be Equal    ${json['code']}    success
+    Should Be Equal    ${json['result']['homeAddr']}    小猪猪的居住地址2楼18号
+    Should Be Equal    ${json['result']['homeCityName']}    贵阳
+    Should Be Equal    ${json['result']['orgAddr']}    小猪猪的工作地址3楼58号
+    Should Be Equal    ${json['result']['orgDistrictName']}    仓山区
+    Should Be Equal    ${json['result']['orgName']}    小猪猪的单位名称
+
+通知运营商已认证-updateDataCertification-check-response
+    #验证接口参数返回数据正确性
+    Should Be Equal    ${json['code']}    success
+    Should Be Equal    ${json['result']['status']}    ${1}
+    #校验数据入库
+    Row Count Is Equal To X    SELECT *FROM customer_center.`scorpio_user_record_${cidnum1}` WHERE content_id = 2 AND customer_id = "${customerId[0][0]}";    1
+
+申请开户-authAccount-check-response
+    #验证接口参数返回数据正确性
+    Should Be Equal    ${json['code']}    success
+    Should Be Equal    ${json['result']}    ${True}
+    #校验进件数据入库
+    SLEEP    3
+    Row Count Is Equal To X    SELECT *FROM apply_center.`a_customer_apply_${cidnum2}` WHERE customer_id = "${cid[0][0]}";    1
+    Row Count Is Equal To X    SELECT *FROM apply_center.`a_customer_apply_status_${cidnum2}` WHERE customer_id = "${cid[0][0]}"; \    1
+
+开户状态-userStatus-check-response
+    #验证接口参数返回数据正确性
+    Should Be Equal    ${json['code']}    success
+    #校验开户成功数据库
+    ${status}    MYSQL查询    SELECT status FROM apply_center.`customer_loan_progress_${cidnum2}` WHERE customer_id = "${cid[0][0]}";    #开户大状态
+    Should Be Equal    ${status[0][0]}    ${1}
+
+获取支持银行列表-queryGroupSupportedBanks-check-response
+    #验证接口参数返回数据正确性
+    Should Be Equal    ${json['code']}    success
+    ${listbank1}    create dictionary    cardType=${1}    bankName=中国农业银行    bankId=${4}
+    ${listbank2}    create dictionary    cardType=${1}    bankName=中国银行    bankId=${1}
+    ${listbank3}    create dictionary    cardType=${1}    bankName=中国工商银行    bankId=${8}
+    ${listbank4}    create dictionary    cardType=${1}    bankName=中国建设银行    bankId=${9}
+    Should Contain    ${json['result']}    ${listbank1}    ${listbank2}    ${listbank3}    ${listbank4}
+
+获取储蓄卡验证码-smsValidationController-check-response
+    Should Be Equal    ${json['code']}    success
+    Should Be Equal    ${json['result']['status']}    ${1}
+
+绑定储蓄卡-bankcard-check-response
+    Should Be Equal    ${json['code']}    success
+
+添加银行卡(获取验证码)-addBankCard-check-response
+    #验证接口参数返回数据正确性
+    Should Be Equal    ${json['code']}    success
+    Should Be Equal    ${json['result']['status']}    ${1}
+
+绑定银行储蓄卡-bankcard-check-response
+    #验证接口参数返回数据正确性
+    Should Be Equal    ${json['code']}    success
+    Should Be Equal    ${json['result']['status']}    ${1}
+    #校验银行卡数据入库
+    Row Count Is Equal To X    SELECT *FROM customer_center.`customer_bankcard_${cidnum1}` WHERE customer_id = "${customerId[0][0]}";    1
+
+获取已绑定银行储蓄卡-getAllBankcard-check-response
+    #验证接口参数返回数据正确性
+    Should Be Equal    ${json['code']}    success
+    Should Be Equal    ${json['result']['addBankCardShow']}    ${False}
+    Should Be Equal    ${json['result']['bankCard'][0]['bankcardNo']}    ${bankcard}
+    Should Be Equal    ${json['result']['bankCard'][0]['reservedPhone']}    18516562116
+
+发起预借款-prepare2Borrow-check-response
+    #验证接口参数返回数据正确性
+    Should Be Equal    ${json['code']}    success
+    Should Not Be Empty    ${json['result']}
+
+获取借款首页信息-getHomeLoanInfo-check-response
+    #验证接口参数返回数据正确性
+    Should Be Equal    ${json['code']}    success
+    Should Be Equal    ${json['result']['concatRate']}    0.065%
+    Should Be Equal    ${json['result']['concatUnit']}    15天
+    Should Be Equal    ${json['result']['homeTip']}    日利息仅0.065% | 最长分3期还
+    Should Be Equal    ${json['result']['maxQuota']}    ${500000}
+    Should Be Equal    ${json['result']['minQuota']}    ${60000}
+    Should Be Equal    ${json['result']['period']}    ${1}
+    Should Be Equal    ${json['result']['periodLength']}    ${14}
+    Should Be Equal    ${json['result']['periodLengthUnit']}    ${0}
+    Should Be Equal    ${json['result']['rate']}    ${0.00065}
+    ${creditline}    MYSQL查询    select credit_line from skynet_credit_line.skynet_credit_line \ where user_id="${customerId[0][1]}" and product_id = ${pid};
+    Should Be Equal    ${json['result']['restCreLine']}    ${creditline[0][0]}
+
+获取vip状态-getLoanStatus-check-response
+    #验证接口参数返回数据正确性
+    Should Be Equal    ${json['code']}    success
+    Should Be Equal    ${json['result']['status']}    ${2}
+    Should Not Be Empty    ${json['result']['content']}
+    Run Keyword If    "${pid}" == "108"    Should Not Be Empty    ${json['result']['loanDoneRate']}    ${json['result']['loanDoneInitRate']}
+    ...    ELSE IF    "${pid}" == "110"    Should Not Contain    ${json}    "loanDoneInitRate"    "loanDoneRate"
+    ...    ELSE    log    1
+    Should Not Be Empty    ${json['result']['price']}
+    Should Be Equal    ${json['result']['type']}    ${1}
+
+获取借款目的-getPurposes-check-response
+    #验证接口参数返回数据正确性
+    Should Be Equal    ${json['code']}    success
+    ${Purposes1}    create dictionary    deleteFlag=${0}    purposeId=${16}    purposeName=购物    purposeStatus=${1}
+    ${Purposes2}    create dictionary    deleteFlag=${0}    purposeId=${19}    purposeName=偿还信用卡    purposeStatus=${1}
+    ${PurposesA}    create dictionary    deleteFlag=${0}    purposeId=${27}    purposeName=购物    purposeStatus=${1}
+    ${PurposesB}    create dictionary    deleteFlag=${0}    purposeId=${30}    purposeName=偿还信用卡    purposeStatus=${1}
+    Run Keyword If    "${pid}" == "109"    Should Contain    ${json['result']}    ${Purposes1}    ${Purposes2}
+    ...    ELSE IF    "${pid}" == "110"    Should Contain    ${json['result']}    ${PurposesA}    ${PurposesB}
+    ...    ELSE    log    1
+
+获取借款验证码-gainDynamicValidateCode-check-response
+    #验证接口参数返回数据正确性
+    Should Be Equal    ${json['code']}    success
+    Should Be Equal    ${json['result']['status']}    ${1}
+
+确认借款-borrow4Vip-check-response
+    #验证接口参数返回数据正确性
+    Should Be Equal    ${json['code']}    success
+    ${oid}    MYSQL查询    select id from loan_center.order_${cidnum2} where customer_id = "${cid[0][0]}";
+    Should Be Equal    ${orderId}    ${oid[0][0]}
+
+获取借还款列表接口-getLoanOrderInfo-check-response
+    #验证接口参数返回数据正确性
+    Should Be Equal    ${json['code']}    success
+
+获取借款信息-borrowInfoQuery-check-response
+    #验证接口参数返回数据正确性
+    Should Be Equal    ${json['code']}    success
+
+借款状态查询-borrowStatusQuery-check-response
+    #验证接口参数返回数据正确性
+    Should Be Equal    ${json['code']}    success
+    Should Be Equal    ${json['result']['status']}    ${106}
+    #校验借款成功入库
+    #Row Count Is Equal To X    SELECT *FROM market_center.vip_info_${cidnum2} WHERE customer_id = "${cid[0][0]}" and status = 1 and period_time = 15 \ and price = ${price} \ ;    1    #会员状态
+    #Row Count Is Equal To X    select *from loan_center.order_${cidnum2} where customer_id = "${cid[0][0]}" AND id = ${orderId} AND bankcard_id = ${bankId} AND each_install_time = 14 and order_status = 106;    1    #借款状态
+    #Row Count Is Equal To X    select *from loan_center.order_fee_info_${cidnum2} where customer_id = "${cid[0][0]}" and order_id = ${orderId} and process_status = 33    1    #会员费抵扣状态
+    #Row Count Is Equal To X    select *from loan_center.contract_${cidnum2} where customer_id ="${cid[0][0]}" and \ order_id = ${orderId};    2    #生成借款合同
+
+获取首页状态-getUserLoanRepayStatus-check-response
+    Should Be Equal    ${json['code']}    success
+
+获取还款信息-arrearQuery-check-response
+    Should Be Equal    ${json['code']}    success
+
+获取借款期数-periods-check-response
+    #验证接口参数返回数据正确性
+    Should Be Equal    ${json['code']}    success
+
+获取账单列表-repayingQuery-check-response
+    #验证接口参数返回数据正确性
+    Should Be Equal    ${json['code']}    success
+    Should Be Equal    ${json['result'][0]['voucherFlag']}    ${True}
+
+获取支付方式-getPayList-check-response
+    #验证接口参数返回数据正确性
+    Should Be Equal    ${json['code']}    success
+
+确认还款-repayment-check-response
+    #验证接口参数返回数据正确性
+    Should Be Equal    ${json['code']}    success
+    Should Be Equal    ${json['result']['status']}    ${1}
+
+还款状态查询-repayStatusQuery-check-response
+    #验证接口参数返回数据正确性
+    Should Be Equal    ${json['code']}    success
+    Should Be Equal    ${json['result']['status']}    ${3}
+    #校验还款成功数据库
+    #Row Count Is Equal To X    SELECT *FROM market_center.vip_info_${cidnum2} WHERE customer_id = "${cid[0][0]}" and status = 3    1    #会员状态失效
+    #Row Count Is Equal To X    select *from loan_center.order_history_${cidnum2} where customer_id = "${cid[0][0]}" AND order_id = ${orderId} AND bankcard_id = ${bankId} AND each_install_time = 14 and order_status = 110;    1    #结清状态
+
+修改手机号（获取原手机号验证码）-registerOrModifyLoginCode-check-response
+    #验证接口参数返回数据正确性
+    Should Be Equal    ${json['code']}    success
+    Should Be Equal    ${json['result']['status']}    ${1}
+
+校验验证码-confirmDynamicCode-check-response
+    #验证接口参数返回数据正确性
+    Should Be Equal    ${json['code']}    success
+    Should Be Equal    ${json['result']}    ${True}
+
+历史账单-listBills-check-response
+    #验证接口参数返回数据正确性
+    Should Be Equal    ${json['code']}    success
+    ${time}    Get Time
+    Should Be Equal    ${json['result'][0]['borrowDate']}    ${time[0:10]}
+    #${date}    Add Time To Date    ${time}    6 month    #14 days
+    #Should Be Equal    ${json['result'][0]['borrowExpiredDate']}    ${date[0:10]}
+    #Should Be Equal    ${json['result'][0]['orderStatus']}    ${110}
+    #Should Be Equal    ${json['result'][0]['installPeriod']}    ${1}
+
+还款记录-getOrderDetails-check-response
+    #验证接口参数返回数据正确性
+    Should Be Equal    ${json['code']}    success
+
+获取可用银行卡-getAllBankcard-check-response
+    #验证接口参数返回数据正确性
+    Should Be Equal    ${json['code']}    success
+
+查询银行卡是否可修改-getBankcardLockStatus-check-response
+    #验证接口参数返回数据正确性
+    Should Be Equal    ${json['code']}    success
+
+获取身份证信息-getIdentity-check-response
+    #验证接口参数返回数据正确性
+    Should Be Equal    ${json['code']}    success
+
+验证银行卡-bankVerifyByBankcardNo-check-response
+    #验证接口参数返回数据正确性
+    Should Be Equal    ${json['code']}    success
+
+换绑卡申请鉴权-addBankcard-check-response
+    #验证接口参数返回数据正确性
+    Should Be Equal    ${json['code']}    success
+
+换绑卡鉴权确认-bankCard-check-response
+    #验证接口参数返回数据正确性
+    Should Be Equal    ${json['code']}    success
+
+获取银行卡信息-getAllBankcard-check-response
+    #验证接口参数返回数据正确性
+    Should Be Equal    ${json['code']}    success
+
+换绑卡申请鉴权（B-A）-addBankcard-check-response
+    #验证接口参数返回数据正确性
+    Should Be Equal    ${json['code']}    success
+    Should Be Equal    ${json['result']['status']}    ${5}

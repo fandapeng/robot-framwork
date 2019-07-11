@@ -1,0 +1,33 @@
+*** Variables ***
+${ENV}            T3
+&{proxies}
+${groupId}        108
+${User-Agent}     Mozilla/5.0 (Linux; Android 5.1.1; vivo X7 Build/LMY47V) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/39.0.0.0 Mobile Safari/537.36
+${channel}        test_channel
+${pid}            108
+${X-DeviceNo}     865873031495827
+${model}          MI 6
+${productId}      108
+${version}        2.2.0
+${manufacture}    Xiaomi
+${X-DeviceToken}    1FD62F48-0CA0-46B5-8AA8-9F8FCE77E7B2
+${app-bundle-id}    com.hj.cardloan.android
+${Accept-Language}    zh-CN,zh;q=0.8
+${terminalId}     21
+${systemVersion}    12.1.2
+${Authorization}    Basic c3VpeGluZGFpOjFxYXohQCMk
+${uid}            1FD62F48-0CA0-46B5-8AA8-9F8FCE77E7B2
+${operators}      CUCC
+${os}             iOS
+${X-Lat}          31.176784
+${bundleId}       com.hj.cardloan.android
+${X-Ip}           172.17.88.132
+${X-Lng}          121.605479
+${X-Token}        ${EMPTY}
+${userId}         ${EMPTY}
+${X-Requested-With}    XMLHttpRequest
+${Accept-Encoding}    gzip, deflate
+${Content-Type}    application/x-www-form-urlencoded
+${fundId}         27
+${token}          ${EMPTY}
+${member-fee}     ON

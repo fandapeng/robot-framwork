@@ -1,0 +1,7 @@
+*** Variables ***
+${E-HOST-GATEWAY}    http://t1-wsdaikuan.2345.com
+${E-HOST-BATCH}    http://172.17.0.31:10012
+${E-HOST-VIPHY}    http://t1-viphy.2345.com
+${E-HOST-H5}      http://t1-wsdaikuan.2345.com
+${E-MYSQL-CONNECT-xinyongjin}    database='api_gateway', user='test_dkw', password='test_dkw', host='172.17.0.32', port=3306,charset="UTF8"
+${E-HOST-CONTRACT}    http://172.17.0.31:3015

@@ -1,0 +1,15 @@
+*** Settings ***
+Resource          基础方法.txt
+Resource          ../公共变量/公共变量.txt
+
+*** Keywords ***
+环境准备
+    MYSQL打开连接
+    log    MYSQL打开连接
+    log    REDIS打开连接
+    log    MONGO打开连接
+
+环境清理
+    log    MYSQL关闭连接
+    log    REDIS关闭连接
+    log    MONGO关闭连接

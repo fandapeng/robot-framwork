@@ -1,0 +1,5 @@
+*** Variables ***
+${E-HOST-GATEWAY}    http://172.17.0.13:10014
+${E-HOST-BATCH}    http://172.17.0.120:30882
+${E-HOST-VIPHY}    http://172.17.0.4
+${E-HOST-H5}      http://172.17.0.6

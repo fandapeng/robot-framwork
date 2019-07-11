@@ -1,0 +1,167 @@
+*** Settings ***
+Library           RequestsLibrary
+Library           String
+Library           DatabaseLibrary
+Resource          ../公共变量/公共变量.txt
+Resource          ${CURDIR}/../公共变量/环境变量${ENV}.txt
+Library           RedisLibrary
+Library           MongoDBLibrary
+Library           Collections
+Library           OperatingSystem
+Library           DateTime
+
+*** Keywords ***
+Header管理
+    ${headers}    Create Dictionary    groupId    2
+    Set To Dictionary    ${headers}    User-Agent    ${User-Agent}
+    Set To Dictionary    ${headers}    channel    ${channel}
+    Set To Dictionary    ${headers}    pid    ${pid}
+    Set To Dictionary    ${headers}    terminalId    ${terminalId}
+    Set To Dictionary    ${headers}    systemVersion    ${systemVersion}
+    Set To Dictionary    ${headers}    Authorization    ${Authorization}
+    Set To Dictionary    ${headers}    X-DeviceNo    ${X-DeviceNo}
+    Set To Dictionary    ${headers}    uid    ${uid}
+    Set To Dictionary    ${headers}    operators    ${operators}
+    Set To Dictionary    ${headers}    model    ${model}
+    Set To Dictionary    ${headers}    productId    ${productId}
+    Set To Dictionary    ${headers}    os    ${os}
+    Set To Dictionary    ${headers}    X-Lat    ${X-Lat}
+    Set To Dictionary    ${headers}    bundleId    ${bundleId}
+    Set To Dictionary    ${headers}    version    ${version}
+    Set To Dictionary    ${headers}    manufacture    ${manufacture}
+    Set To Dictionary    ${headers}    X-DeviceToken    ${X-DeviceToken}
+    Set To Dictionary    ${headers}    X-Ip    ${X-Ip}
+    Set To Dictionary    ${headers}    app-bundle-id    ${app-bundle-id}
+    Set To Dictionary    ${headers}    Accept-Language    ${Accept-Language}
+    Set To Dictionary    ${headers}    X-Lng    ${X-Lng}
+    Set To Dictionary    ${headers}    token    ${token}
+    [Return]    ${headers}
+
+Header管理-H5
+    ${headers}    Create Dictionary    User-Agent    ${User-Agent}
+    Set To Dictionary    ${headers}    channel    ${channel}
+    Set To Dictionary    ${headers}    pid    ${pid}
+    Set To Dictionary    ${headers}    terminalId    ${terminalId}
+    Set To Dictionary    ${headers}    uid    ${uid}
+    Set To Dictionary    ${headers}    operators    ${None}
+    Set To Dictionary    ${headers}    version    ${version}
+    Set To Dictionary    ${headers}    os    ${os}
+    Set To Dictionary    ${headers}    manufacture    ${manufacture}
+    Set To Dictionary    ${headers}    token    ${token}
+    Set To Dictionary    ${headers}    Content-Type    ${Content-Type}
+    [Return]    ${headers}
+
+POST请求-H5
+    [Arguments]    ${url}    ${data}
+    Create Session    api    ${E-HOST-H5}    proxies=&{proxies}
+    ${headers}    Header管理-H5
+    #Set To Dictionary    ${headers}    Referer=http://t2-wsdaikuan.2345.com/xfjr/public/growthcenter/index.html?token=${token}&appBundleId=com.hyron.biweeklyloan&version=9.2.1&channel=test_channel&os=android
+    ${response}    Post Request    api    ${url}    ${data}    headers=${headers}
+    ${response_json}    Set Variable    ${response.json()}
+    [Return]    ${response_json}
+
+POST请求-form
+    [Arguments]    ${url}    ${data}
+    [Timeout]
+    Create Session    api    ${E-HOST-GATEWAY}    proxies=&{proxies}
+    ${headers}    Header管理
+    Set To Dictionary    ${headers}    Content-Type=application/x-www-form-urlencoded
+    #Set To Dictionary    ${headers}    token=1E9D46295783927CD65A86DD7F52136AE064C6E59C5E8C0F1A74D4C0A7DBE53F
+    ${response}    Post Request    api    ${url}    ${data}    headers=${headers}
+    ${response_json}    Set Variable    ${response.json()}
+    [Return]    ${response_json}
+
+POST请求-text
+    [Arguments]    ${url}    ${data}
+    [Timeout]
+    Create Session    api    ${E-HOST-GATEWAY}    proxies=&{proxies}
+    ${headers}    Header管理
+    Set To Dictionary    ${headers}    Content-Type=text/plain;charset=utf-8
+    ${response}    Post Request    api    ${url}    ${data}    headers=${headers}
+    ${response_json}    Set Variable    ${response.json()}
+    [Return]    ${response_json}
+
+POST请求-Json
+    [Arguments]    ${url}    ${data}
+    Create Session    api    ${E-HOST-GATEWAY}    proxies=&{proxies}
+    ${headers}    Header管理
+    Set To Dictionary    ${headers}    token=${token}    Content-Type=application/json;charset=UTF-8
+    ${response}    Post Request    api    ${url}    ${data}    headers=${headers}
+    ${response_json}    Set Variable    ${response.json()}
+    [Return]    ${response_json}
+
+POST请求-files
+    [Arguments]    ${url}    ${data}    ${files}
+    [Timeout]
+    Create Session    api    ${E-HOST-GATEWAY}    proxies=&{proxies}
+    ${headers}    Header管理
+    ${response}    Post Request    api    ${url}    data=${data}    files=${files}    headers=${headers}
+    ${response_json}    Set Variable    ${response.json()}
+    [Return]    ${response_json}
+
+POST请求-files_UTF-8
+    Create Session    api    ${E-HOST-GATEWAY}    proxies=&{proxies}
+    ${headers}    Header管理
+    Set To Dictionary    ${headers}    Content-Type: application/x-www-form-urlencoded; charset=UTF-8    token=${token}
+    ${response}    Post Request    api    ${url}    ${data}    headers=${headers}
+    ${response_json}    Set Variable    ${response.json()}
+
+MYSQL打开连接
+    Connect To Database Using Custom Params    pymysql    ${E-MYSQL-CONNECT-xinyongjin}
+
+MYSQL查询
+    [Arguments]    ${sql}
+    ${ret}    query    ${sql}
+    [Return]    ${ret}
+
+MYSQL关闭连接
+    Disconnect From Database
+
+REDIS打开连接
+    Connect To Redis    ${E-REDIS-CONNECT-STRING}
+
+REDIS关闭连接
+    Disconnect From Redis
+
+REDIS查询
+    [Arguments]    ${key}
+    ${value}    Get From Redis    ${key}
+    [Return]    ${value}
+
+MONGO打开连接
+    Connect To Mongodb    ${E-MONGO-CONNECT-STRING}
+
+MONGO查询
+    [Arguments]    ${collection}    ${filter}={}
+    sleep    0.5s
+    ${ret}    Retrieve Some Mongodb Records    mongo_hesuan    ${collection}    ${filter}    ${True}
+    [Return]    ${ret}
+
+MONGO查询proxy报文
+    [Arguments]    ${filter}={}
+    sleep    0.5s
+    ${year}    ${month}    Get Time    year,month
+    ${collection}    Set Variable    proxy_packet_message_record_${year}_${month}
+    ${ret}    Retrieve Some Mongodb Records    hexin_rebuild    ${collection}    ${filter}    ${True}
+    [Return]    ${ret}
+
+MONGO查询business报文
+    [Arguments]    ${filter}={}
+    sleep    1s
+    ${year}    ${month}    Get Time    year,month
+    ${collection}    Set Variable    business_packet_message_record_${year}_${month}
+    ${ret}    Retrieve Some Mongodb Records    hexin_rebuild    ${collection}    ${filter}    ${True}
+    [Return]    ${ret}
+
+MONGO关闭连接
+    Disconnect From Mongodb
+
+读取文件
+    [Arguments]    ${path}
+    ${file}    Get Binary File    ${path}
+    [Return]    ${file}
+
+取模分表
+    [Arguments]    ${var}    ${num}
+    ${n}    Set Variable    ${${var}%${num}}
+    [Return]    ${n}

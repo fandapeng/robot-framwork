@@ -1,0 +1,91 @@
+#T1
+172.17.0.31 t1-apihubdaikuan.2345.com
+172.17.0.31 t1-hexinapidaikuan.2345.com
+172.17.0.31 t1-daikuan.2345.com
+172.17.0.31 t1-daikuanwang.2345.com
+172.17.0.31 t1-diakuan.2345.com
+172.17.0.31 t1-dk.58tianqi.com
+172.17.0.31 t1-downloaddaikuan.2345.com
+172.17.0.31 t1-ltd.58tianqi.com
+172.17.0.31 t1-managerdaikuan.2345.com
+172.17.0.31 t1-m.daikuan.2345.com
+172.17.0.31 t1-mdaikuan.2345.com
+172.17.0.31 t1-payapidaikuan.2345.com
+172.17.0.31 t1-v7799.com
+172.17.0.31 t1-wap.daikuan.2345.com
+172.17.0.31 t1-wsdaikuan.2345.com
+172.17.0.31 t1-wxdaikuan.2345.com
+
+
+#T2
+172.16.0.143 t2-apihubdaikuan.2345.com
+172.16.0.143 t2-hexinapidaikuan.2345.com
+172.16.0.143 t2-daikuan.2345.com
+172.16.0.143 t2-daikuanwang.2345.com
+172.16.0.143 t2-diakuan.2345.com
+172.16.0.143 t2-dk.58tianqi.com
+172.16.0.143 t2-downloaddaikuan.2345.com
+172.16.0.143 t2-ltd.58tianqi.com
+172.16.0.143 t2-managerdaikuan.2345.com
+172.16.0.143 t2-m.daikuan.2345.com
+172.16.0.143 t2-mdaikuan.2345.com
+172.16.0.143 t2-payapidaikuan.2345.com
+172.16.0.143 t2-v7799.com
+172.16.0.143 t2-wap.daikuan.2345.com
+172.16.0.143 t2-wsdaikuan.2345.com
+172.16.0.143 t2-wxdaikuan.2345.com
+
+#T3
+172.16.0.145 t3-apihubdaikuan.2345.com
+172.16.0.145 t3-hexinapidaikuan.2345.com
+172.16.0.145 t3-daikuan.2345.com
+172.16.0.145 t3-daikuanwang.2345.com
+172.16.0.145 t3-diakuan.2345.com
+172.16.0.145 t3-dk.58tianqi.com
+172.16.0.145 t3-downloaddaikuan.2345.com
+172.16.0.145 t3-ltd.58tianqi.com
+172.16.0.145 t3-managerdaikuan.2345.com
+172.16.0.145 t3-m.daikuan.2345.com
+172.16.0.145 t3-mdaikuan.2345.com
+172.16.0.145 t3-payapidaikuan.2345.com
+172.16.0.145 t3-v7799.com
+172.16.0.145 t3-wap.daikuan.2345.com
+172.16.0.145 t3-wsdaikuan.2345.com
+172.16.0.145 t3-wxdaikuan.2345.com
+
+
+180.101.195.217 grafana.2345.com
+
+221.228.75.172 game.2345.com
+172.17.20.117 zs.2345.com
+172.17.0.31 t1-shouyin.2345.com
+172.17.20.1 zhushou.2345.com zs.2345.com img1.2345.com
+172.16.0.143 t2-shouyin.2345.com
+172.16.0.145 t3-shouyin.2345.com
+221.228.75.172 game.2345.com
+221.228.75.188 test-open.ezloan.cn
+221.228.75.188 pic.dkwapp.2345.com
+172.16.0.56 quest.2345.com
+
+
+172.17.0.31 t1-viphy.2345.com
+172.16.0.143 t2-viphy.2345.com
+172.16.0.145 t3-viphy.2345.com
+
+
+172.17.0.31 imgwx-t1.2345.com
+172.16.0.143  imgwx-t2.2345.com
+172.16.0.145  imgwx-t3.2345.com
+
+172.17.16.126 t1-cdw.2345.com
+172.17.16.129 t2-cdw.2345.com
+
+
+
+# 畅借款H5页测试环境host
+# T1测试地址
+172.17.0.31 t1-changloan.com
+# T2测试地址
+172.16.0.143 t2-changloan.com
+# T3测试地址
+172.16.0.143 t3-changloan.com
